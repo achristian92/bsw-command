@@ -46,15 +46,19 @@ class CheckCommandTicketer extends Command
     public function handle()
     {
         $this->info('Iniciando escuchador para consultar la API cada 20 segundos...');
-
+        Log::info("Consultando api ticketer");
         while (true) {
 
             $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
+            $token = env('COMPANY_TOKEN');
+
+            Log::info("api base:".$api_url);
+            Log::info("token:".$token);
 
             $response = Http::withHeaders([
                 'accept' => 'application/json'
             ])->get($api_url.'api/v1/command',[
-                'token' => env('COMPANY_TOKEN')
+                'token' => $token
             ]);
 
             if (!$response->successful())
@@ -99,7 +103,7 @@ class CheckCommandTicketer extends Command
                         $notify = Http::withHeaders([
                             'accept' => 'application/json'
                         ])->put($api_url."api/v1/command/".$rep['uuid'],[
-                            'token' => env('COMPANY_TOKEN')
+                            'token' => $token
                         ]);
 
                         if (!$notify->successful())
@@ -116,7 +120,7 @@ class CheckCommandTicketer extends Command
             }
 
             // Espera 20 segundos antes de la siguiente iteración
-            sleep(5);
+            sleep(30);
         }
 
         return 0;

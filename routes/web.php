@@ -25,6 +25,7 @@ Route::get('/', function () {
 });
 
 Route::get('/test', function () {
+    $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
 
 //    $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
 //
