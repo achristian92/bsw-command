@@ -130,7 +130,6 @@ class CheckCommandTicketer extends Command
                 Log::error($e->getMessage());
             }
 
-
         }
     }
     private function preCuenta($rep,$api_url,$token)
@@ -145,13 +144,16 @@ class CheckCommandTicketer extends Command
             $printer -> setTextSize(1,1);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text("PRE-CUENTA"."\n");
+            $printer -> text("#:".$data->order_num."\n");
 //            $printer -> text($data->invoice_name.":".$data->serie_num."\n");
             $printer -> setJustification(Printer::JUSTIFY_LEFT);
             $printer -> text("DNI:".$data->cli_nro_document."\n");
-            $printer -> text("CLIENTE:".$data->cli_name);
+            $printer -> text("CLIENTE:".$data->cli_name."\n");
             $printer -> text("FECHA:".$data->issue_date."\n");
+            $printer -> text("MOZO:".$data->waiter."\n");
+            $printer -> text("MESA:".$data->table."\n");
             $printer -> feed();
-            $printer -> text("DETALLE  PRECIO  TOTAL             \n");
+            $printer -> text("DETALLE                PRECIO      TOTAL   \n");
             $printer -> text("-----------------------------------\n");
             foreach ($data->items as $item) {
                 $printer -> text($item->name."   ".$item->quantity."   ".$item->total."\n");
@@ -159,7 +161,7 @@ class CheckCommandTicketer extends Command
             }
             $printer -> selectPrintMode();
             $printer -> feed();
-            $printer -> setJustification(Printer::JUSTIFY_RIGHT);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
 //            $printer -> text("DESCUENTO:".$data->discount_amount);
 //            $printer -> text("SUBTOTAL:".$data->subtotal);
 //            $printer -> text("IGV:".$data->igv);
