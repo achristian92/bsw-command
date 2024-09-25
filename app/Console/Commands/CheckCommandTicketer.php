@@ -64,65 +64,175 @@ class CheckCommandTicketer extends Command
             if (!$response->successful())
                 Log::error($response->json()['errors'][0]['detail'][0]);
 
-            $resp = $response->json()['data'];
+            $respApi = $response->json()['data'];
 
-            foreach ($resp as $rep) {
-                $data = json_decode($rep['data']);
-
-                foreach ($data->printers as  $zn) {
-                    try {
-                        $connector = new NetworkPrintConnector($zn->pr_ip);
-                        $printer = new Printer($connector);
-                        $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-                        $printer -> setJustification(Printer::JUSTIFY_CENTER);
-                        $printer -> setTextSize(1,1);
-                        $printer -> setJustification(Printer::JUSTIFY_CENTER);
-                        $printer -> text($data->company."\n");
-                        $printer -> text("#:".$data->num."\n");
-                        $printer -> setJustification(Printer::JUSTIFY_LEFT);
-                        $printer -> text("AREA:".$zn->area."\n");
-                        $printer -> text("HORA:".$data->date.' '.$data->time."\n");
-                        $printer -> text("MOZO:".$data->waiter."\n");
-                        $printer -> text("MESA:".$data->table."\n");
-                        $printer -> feed();
-                        $printer -> text("CANT  DETALLE                    \n");
-                        $printer -> text("---------------------------------\n");
-                        foreach ($zn->items as $item) {
-                            $printer -> text("  ".$item->qty."    ".$item->name."\n");
-                            if($item->notes)
-                                $printer -> text("  "."    "."(Nota:".$item->notes.')'."\n");
-
-                            $printer -> text("-----------------------------------\n");
-                        }
-                        $printer -> selectPrintMode();
-                        $printer -> feed();
-                        $printer -> feed();
-                        $printer -> cut();
-                        $printer ->close();
-
-                        $notify = Http::withHeaders([
-                            'accept' => 'application/json'
-                        ])->put($api_url."api/v1/command/".$rep['uuid'],[
-                            'token' => $token
-                        ]);
-
-                        if (!$notify->successful())
-                            Log::error("Error para actualizar envio de comanda");
-
-                    } catch (Exception $e) {
-                        Log::error($e->getMessage());
-                    }
-
-
-                }
-
-
+            foreach ($respApi as $rep) {
+                if($rep['model_type'] === 'command')
+                    $this->command($rep,$api_url,$token);
+                if($rep['model_type'] === 'precuenta')
+                    $this->preCuenta($rep,$api_url,$token);
+                if($rep['model_type'] === 'invoice')
+                    $this->invoice($rep,$api_url,$token);
             }
 
             // Espera 20 segundos antes de la siguiente iteración
-            sleep(30);
+            sleep(20);
         }
 
         return 0;
+    }
+
+    private function command($rep,$api_url,$token)
+    {
+        $data = json_decode($rep['data']);
+
+        foreach ($data->printers as  $zn) {
+            try {
+                $connector = new NetworkPrintConnector($zn->pr_ip);
+                $printer = new Printer($connector);
+                $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> setTextSize(1,1);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> text($data->company."\n");
+                $printer -> text("#:".$data->num."\n");
+                $printer -> setJustification(Printer::JUSTIFY_LEFT);
+                $printer -> text("AREA:".$zn->area."\n");
+                $printer -> text("HORA:".$data->date.' '.$data->time."\n");
+                $printer -> text("MOZO:".$data->waiter."\n");
+                $printer -> text("MESA:".$data->table."\n");
+                $printer -> feed();
+                $printer -> text("CANT  DETALLE                    \n");
+                $printer -> text("---------------------------------\n");
+                foreach ($zn->items as $item) {
+                    $printer -> text("  ".$item->qty."    ".$item->name."\n");
+                    if($item->notes)
+                        $printer -> text("  "."    "."(Nota:".$item->notes.')'."\n");
+
+                    $printer -> text("-----------------------------------\n");
+                }
+                $printer -> selectPrintMode();
+                $printer -> feed();
+                $printer -> feed();
+                $printer -> cut();
+                $printer ->close();
+
+                $notify = Http::withHeaders([
+                    'accept' => 'application/json'
+                ])->put($api_url."api/v1/command/".$rep['uuid'],[
+                    'token' => $token
+                ]);
+
+                if (!$notify->successful())
+                    Log::error("Error para actualizar envio de comanda");
+
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
+            }
+
+
+        }
+    }
+    private function preCuenta($rep,$api_url,$token)
+    {
+        $data = json_decode($rep['data']);
+
+        try {
+            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $printer = new Printer($connector);
+            $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> setTextSize(1,1);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> text("PRE-CUENTA"."\n");
+//            $printer -> text($data->invoice_name.":".$data->serie_num."\n");
+            $printer -> setJustification(Printer::JUSTIFY_LEFT);
+            $printer -> text("DNI:".$data->cli_nro_document."\n");
+            $printer -> text("CLIENTE:".$data->cli_name);
+            $printer -> text("FECHA:".$data->issue_date."\n");
+            $printer -> feed();
+            $printer -> text("DETALLE  PRECIO  TOTAL             \n");
+            $printer -> text("-----------------------------------\n");
+            foreach ($data->items as $item) {
+                $printer -> text($item->name."   ".$item->quantity."   ".$item->total."\n");
+                $printer -> text("-----------------------------------\n");
+            }
+            $printer -> selectPrintMode();
+            $printer -> feed();
+            $printer -> setJustification(Printer::JUSTIFY_RIGHT);
+//            $printer -> text("DESCUENTO:".$data->discount_amount);
+//            $printer -> text("SUBTOTAL:".$data->subtotal);
+//            $printer -> text("IGV:".$data->igv);
+            $printer -> text("IMPORTE TOTAL:".$data->total_incl);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> feed();
+            $printer -> cut();
+            $printer ->close();
+
+            $notify = Http::withHeaders([
+                'accept' => 'application/json'
+            ])->put($api_url."api/v1/command/".$rep['uuid'],[
+                'token' => $token
+            ]);
+
+            if (!$notify->successful())
+                Log::error("Error para actualizar envio de comanda");
+
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+        }
+
+
+
+    }
+    private function invoice($rep,$api_url,$token)
+    {
+        $data = json_decode($rep['data']);
+        //dd($data);
+        foreach ($data->printers as  $zn) {
+            try {
+                $connector = new NetworkPrintConnector($zn->pr_ip);
+                $printer = new Printer($connector);
+                $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> setTextSize(1,1);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> text($data->company."\n");
+                $printer -> text("#:".$data->num."\n");
+                $printer -> setJustification(Printer::JUSTIFY_LEFT);
+                $printer -> text("AREA:".$zn->area."\n");
+                $printer -> text("HORA:".$data->date.' '.$data->time."\n");
+                $printer -> text("MOZO:".$data->waiter."\n");
+                $printer -> text("MESA:".$data->table."\n");
+                $printer -> feed();
+                $printer -> text("CANT  DETALLE                    \n");
+                $printer -> text("---------------------------------\n");
+                foreach ($zn->items as $item) {
+                    $printer -> text("  ".$item->qty."    ".$item->name."\n");
+                    if($item->notes)
+                        $printer -> text("  "."    "."(Nota:".$item->notes.')'."\n");
+
+                    $printer -> text("-----------------------------------\n");
+                }
+                $printer -> selectPrintMode();
+                $printer -> feed();
+                $printer -> feed();
+                $printer -> cut();
+                $printer ->close();
+
+                $notify = Http::withHeaders([
+                    'accept' => 'application/json'
+                ])->put($api_url."api/v1/command/".$rep['uuid'],[
+                    'token' => $token
+                ]);
+
+                if (!$notify->successful())
+                    Log::error("Error para actualizar envio de comanda");
+
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
+            }
+
+        }
     }
 }
