@@ -166,8 +166,8 @@ class CheckCommandTicketer extends Command
             $printer -> feed();
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text("TOTAL CONSUMO:"."    S/".round($data->total_amount_items,2)."\n");
-            $printer -> text("DESCUENTO:"."        S/".round($data->discount_amount,2)."\n");
-            $printer -> text("TOTAL A PAGAR:"."    S/".round($data->total_incl,2)."\n");
+            $printer -> text("DESCUENTO:"."        S/".$data->discount_amount."\n");
+            $printer -> text("TOTAL A PAGAR:"."    S/".$data->total_incl."\n");
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> feed();
             $printer -> text("DNI/RUC:___________________________________________________\n");
