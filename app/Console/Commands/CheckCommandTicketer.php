@@ -195,71 +195,77 @@ class CheckCommandTicketer extends Command
     {
         $data = json_decode($rep['data']);
 
-        try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
-            $printer = new Printer($connector);
-            $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> setTextSize(1,1);
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> text($data->company_name."\n");
-            $printer -> text($data->company_ruc."\n");
-            $printer -> setTextSize(2,1);
-            $printer -> text($data->invoice_name."\n");
-            $printer -> text($data->serie_num."\n");
-            $printer -> setTextSize(1,1);
-            $printer -> setJustification(Printer::JUSTIFY_LEFT);
-            $printer -> text("DNI:".$data->cli_nro_document."\n");
-            $printer -> text("CLIENTE:".$data->cli_name."\n");
-            $printer -> text("F.EMISION:".$data->issue_date."\n");
-            $printer -> text($data->usu_ref."\n");
-            $printer -> feed();
-            $printer -> text("CANT  PRODUCTO        SUBTOTAL \n");
-            $printer -> text("----------------------------------------\n");
-            foreach ($data->items as $item) {
-                $printer -> text(" ".$item->quantity."    ".$item->name."    ".$item->total."\n");
-                $printer -> text("--------------------------------------\n");
-            }
-            $printer -> selectPrintMode();
-            $printer -> feed();
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> text("DESCUENTO:"."        S/".$data->discount_amount."\n");
-            $printer -> text("SUBTOTAL:"."        S/".$data->total_tax_excl."\n");
-            $printer -> text("IGV:"."             S/".$data->total_tax."\n");
-            $printer -> text("TOTAL A PAGAR:"."    S/".$data->total_tax_incl."\n");
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> feed();
-            $printer -> setJustification(Printer::JUSTIFY_LEFT);
-            $printer -> text("PAGOS:"."\n");
-            foreach (json_decode($data->payments) as $payment) {
-                $printer -> text(" ".$payment->name."($payment->ref):S/".$payment->amount."\n");
-            }
-            $printer -> feed();
-            if($data->tips) {
-                $printer -> text("PROPINAS:"."\n");
-                foreach (json_decode($data->tips) as $tip) {
-                    $printer -> text(" ".$tip->name."($tip->ref):S/".$tip->amount."\n");
+        for ($i = 1; $i <= 2; $i++) {
+            try {
+                $connector = new NetworkPrintConnector($data->printer->pr_ip);
+                $printer = new Printer($connector);
+                $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> setTextSize(1,1);
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> text($data->company_name."\n");
+                $printer -> text($data->company_ruc."\n");
+                $printer -> setTextSize(2,1);
+                $printer -> text($data->invoice_name."\n");
+                $printer -> text($data->serie_num."\n");
+                $printer -> setTextSize(1,1);
+                $printer -> setJustification(Printer::JUSTIFY_LEFT);
+                $printer -> text("DNI:".$data->cli_nro_document."\n");
+                $printer -> text("CLIENTE:".$data->cli_name."\n");
+                $printer -> text("F.EMISION:".$data->issue_date."\n");
+                $printer -> text($data->usu_ref."\n");
+                $printer -> feed();
+                $printer -> text("CANT  PRODUCTO        SUBTOTAL \n");
+                $printer -> text("----------------------------------------\n");
+                foreach ($data->items as $item) {
+                    $printer -> text(" ".$item->quantity."    ".$item->name."    ".$item->total."\n");
+                    $printer -> text("--------------------------------------\n");
+                }
+                $printer -> selectPrintMode();
+                $printer -> feed();
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> text("DESCUENTO:"."        S/".$data->discount_amount."\n");
+                $printer -> text("SUBTOTAL:"."        S/".$data->total_tax_excl."\n");
+                $printer -> text("IGV:"."             S/".$data->total_tax."\n");
+                $printer -> text("TOTAL A PAGAR:"."    S/".$data->total_tax_incl."\n");
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> feed();
+                $printer -> setJustification(Printer::JUSTIFY_LEFT);
+                $printer -> text("PAGOS:"."\n");
+                foreach (json_decode($data->payments) as $payment) {
+                    $printer -> text(" ".$payment->name."($payment->ref):S/".$payment->amount."\n");
                 }
                 $printer -> feed();
+                if($data->tips) {
+                    $printer -> text("PROPINAS:"."\n");
+                    foreach (json_decode($data->tips) as $tip) {
+                        $printer -> text(" ".$tip->name."($tip->ref):S/".$tip->amount."\n");
+                    }
+                    $printer -> feed();
+                }
+                $printer -> setJustification(Printer::JUSTIFY_CENTER);
+                $printer -> text("Representación impresa del comprobante electrónico. Para consultar ingrese a www.sunat.gob.pe:"."\n");
+                $printer -> text("FECHA:".now()->format('d/m/Y H:i')."\n");
+                $printer -> feed();
+                $printer -> cut();
+                $printer ->close();
+
+                if($i == '1') {
+                    $notify = Http::withHeaders([
+                        'accept' => 'application/json'
+                    ])->put($api_url."api/v1/command/".$rep['uuid'],[
+                        'token' => $token
+                    ]);
+
+                    if (!$notify->successful())
+                        Log::error("Error para actualizar envio de comanda");
+                }
+
+
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
             }
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> text("Representación impresa del comprobante electrónico. Para consultar ingrese a www.sunat.gob.pe:"."\n");
-            $printer -> text("FECHA:".now()->format('d/m/Y H:i')."\n");
-            $printer -> feed();
-            $printer -> cut();
-            $printer ->close();
-
-            $notify = Http::withHeaders([
-                'accept' => 'application/json'
-            ])->put($api_url."api/v1/command/".$rep['uuid'],[
-                'token' => $token
-            ]);
-
-            if (!$notify->successful())
-                Log::error("Error para actualizar envio de comanda");
-
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
         }
+
     }
 }
