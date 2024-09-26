@@ -155,10 +155,10 @@ class CheckCommandTicketer extends Command
             $printer -> text("MOZO:".$data->waiter."\n");
             $printer -> text("MESA:".$data->table."\n");
             $printer -> feed();
-            $printer -> text("CANT    PRODUCTO            SUBTOTAL \n");
+            $printer -> text("CANT    PRODUCTO        SUBTOTAL \n");
             $printer -> text("----------------------------------------\n");
             foreach ($data->items as $item) {
-                $printer -> text("  ".round($item->quantity)."    ".$item->name."    ".$item->total."\n");
+                $printer -> text("  ".$item->quantity."    ".$item->name."    ".$item->total."\n");
 //                $printer -> text($item->name."   ".round($item->quantity)."   ".$item->total."\n");
                 $printer -> text("--------------------------------------\n");
             }
