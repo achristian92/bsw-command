@@ -226,10 +226,17 @@ class CheckCommandTicketer extends Command
             $printer -> text("TOTAL A PAGAR:"."    S/".$data->total_tax_incl."\n");
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> feed();
+            $printer -> setJustification(Printer::JUSTIFY_LEFT);
             $printer -> text("PAGOS:"."\n");
             foreach (json_decode($data->payments) as $payment) {
-                $printer -> text(" ".$payment->name."\n");
+                $printer -> text(" ".$payment->name."($payment->ref):S/".$payment->amount."\n");
             }
+            $printer -> feed();
+            $printer -> text("PROPINAS:"."\n");
+            foreach (json_decode($data->tips) as $tip) {
+                $printer -> text(" ".$tip->name."($tip->ref):S/".$tip->amount."\n");
+            }
+            $printer -> feed();
             $printer -> text("FECHA:".now()->format('d/m/Y H:i')."\n");
             $printer -> feed();
             $printer -> cut();
