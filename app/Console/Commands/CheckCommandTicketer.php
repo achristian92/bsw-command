@@ -232,11 +232,14 @@ class CheckCommandTicketer extends Command
                 $printer -> text(" ".$payment->name."($payment->ref):S/".$payment->amount."\n");
             }
             $printer -> feed();
-            $printer -> text("PROPINAS:"."\n");
-            foreach (json_decode($data->tips) as $tip) {
-                $printer -> text(" ".$tip->name."($tip->ref):S/".$tip->amount."\n");
+            if($data->tips) {
+                $printer -> text("PROPINAS:"."\n");
+                foreach (json_decode($data->tips) as $tip) {
+                    $printer -> text(" ".$tip->name."($tip->ref):S/".$tip->amount."\n");
+                }
+                $printer -> feed();
             }
-            $printer -> feed();
+
             $printer -> text("FECHA:".now()->format('d/m/Y H:i')."\n");
             $printer -> feed();
             $printer -> cut();
