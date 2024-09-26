@@ -165,14 +165,16 @@ class CheckCommandTicketer extends Command
             $printer -> selectPrintMode();
             $printer -> feed();
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> text("TOTAL CONSUMO:".$data->total_amount_items);
-            $printer -> text("DESCUENTO:".$data->discount_amount);
-            $printer -> text("TOTAL A PAGAR:".$data->total_incl);
+            $printer -> text("TOTAL CONSUMO:".$data->total_amount_items."\n");
+            $printer -> text("DESCUENTO:".$data->discount_amount."\n");
+            $printer -> text("TOTAL A PAGAR:".$data->total_incl."\n");
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> feed();
             $printer -> text("DNI/RUC:___________________________________________________\n");
             $printer -> text("NOMBRE/R.SOCIAL:___________________________________________\n");
-
+            $printer -> feed();
+            $printer -> text("IMPRESIION:".now()->format('d/m/Y H:i')."\n");
+            $printer -> feed();
             $printer -> cut();
             $printer ->close();
 
