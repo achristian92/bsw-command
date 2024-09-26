@@ -143,6 +143,8 @@ class CheckCommandTicketer extends Command
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> setTextSize(1,1);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> text($data->company_name."\n");
+            $printer -> text($data->company_ruc."\n");
             $printer -> text("PRE-CUENTA"."\n");
             $printer -> text("#:".$data->order_num."\n");
 //            $printer -> text($data->invoice_name.":".$data->serie_num."\n");
@@ -153,11 +155,12 @@ class CheckCommandTicketer extends Command
             $printer -> text("MOZO:".$data->waiter."\n");
             $printer -> text("MESA:".$data->table."\n");
             $printer -> feed();
-            $printer -> text("DETALLE                PRECIO      TOTAL   \n");
-            $printer -> text("-----------------------------------\n");
+            $printer -> text("CANT    PRODUCTO            SUBTOTAL \n");
+            $printer -> text("----------------------------------------\n");
             foreach ($data->items as $item) {
-                $printer -> text($item->name."   ".$item->quantity."   ".$item->total."\n");
-                $printer -> text("-----------------------------------\n");
+                $printer -> text("  ".round($item->quantity)."    ".$item->name."    ".$item->total."\n");
+//                $printer -> text($item->name."   ".round($item->quantity)."   ".$item->total."\n");
+                $printer -> text("--------------------------------------\n");
             }
             $printer -> selectPrintMode();
             $printer -> feed();
