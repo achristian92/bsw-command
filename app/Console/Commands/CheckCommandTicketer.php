@@ -205,7 +205,8 @@ class CheckCommandTicketer extends Command
             $printer -> text($data->company_name."\n");
             $printer -> text($data->company_ruc."\n");
             $printer -> setTextSize(2,1);
-            $printer -> text($data->invoice_name.":".$data->serie_num."\n");
+            $printer -> text($data->invoice_name."\n");
+            $printer -> text($data->serie_num."\n");
             $printer -> setTextSize(1,1);
             $printer -> setJustification(Printer::JUSTIFY_LEFT);
             $printer -> text("DNI:".$data->cli_nro_document."\n");
