@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 use Warrior\Ticketer\Ticketer;
@@ -61,8 +62,11 @@ class CheckCommandTicketer extends Command
                 'token' => $token
             ]);
 
-            if (!$response->successful())
+            if (!$response->successful()) {
                 Log::error($response->json()['errors'][0]['detail'][0]);
+                return 0;
+            }
+
 
             $respApi = $response->json()['data'];
 
@@ -73,6 +77,8 @@ class CheckCommandTicketer extends Command
                     $this->preCuenta($rep,$api_url,$token);
                 if($rep['model_type'] === 'invoice')
                     $this->invoice($rep,$api_url,$token);
+                if($rep['model_type'] === 'cashRegister')
+                    $this->cashRegister($rep,$api_url,$token);
             }
 
             // Espera 20 segundos antes de la siguiente iteración
@@ -268,4 +274,65 @@ class CheckCommandTicketer extends Command
         }
 
     }
+    private function cashRegister($rep,$api_url,$token)
+    {
+        $data = json_decode($rep['data']);
+
+        try {
+            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $printer = new Printer($connector);
+            $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> setTextSize(1,1);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> text($data->company_name."\n");
+            $printer -> text($data->company_ruc."\n");
+            $printer -> text("REPORTE DE MOVIMIENTO DE COBROS"."\n");
+            $printer -> feed();
+            $printer -> setJustification(Printer::JUSTIFY_LEFT);
+            $printer -> text("CAJA:".$data->cash.'/'.$data->serie_num."\n");
+            $printer -> text("USUARIO:".$data->user."\n");
+            $printer -> text("APERTURA:".$data->issue_date."\n");
+            $printer -> text("CIERRE:".$data->due_date."\n");
+            $printer -> feed();
+            $printer -> text("#  MEDIO         PAGO \n");
+            $printer -> text("----------------------------------------\n");
+            foreach ($data->details as $detail) {
+                $printer -> text(" ".$detail->name."\n");
+                foreach ($detail->payments as $payment) {
+                    $printer -> text("   *".$payment->restaurant_order_id."    ".Str::substr($detail->name,0,5).($payment->operation_number ?'('.$payment->operation_number.')': '').($payment->type == '1' ?'(PRO)': '')."            S/".number_format($payment->amount,2)."\n");
+                }
+                $printer -> text("--------------------------------------\n");
+            }
+            $printer -> selectPrintMode();
+            $printer -> feed();
+            $printer -> text("Monto Inicial:"."    S/".number_format($data->amount_initial,2)."\n");
+            foreach ($data->details as $detail2) {
+                $printer -> text(" ".$detail2->name."                         S/".number_format($detail2->total,2)."\n");
+            }
+            $printer -> setTextSize(1,2);
+            $printer -> text("TOTAL RECAUDADO:"."    S/".number_format($data->total,2)."\n");
+            $printer -> setTextSize(1,1);
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> feed();
+            $printer -> text("FECHA:".now()->format('d/m/Y H:i')."\n");
+            $printer -> feed();
+            $printer -> cut();
+            $printer ->close();
+
+            $notify = Http::withHeaders([
+                'accept' => 'application/json'
+            ])->put($api_url."api/v1/command/".$rep['uuid'],[
+                'token' => $token
+            ]);
+
+            if (!$notify->successful())
+                Log::error("Error para actualizar envio de comanda");
+
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+        }
+
+    }
+
 }
