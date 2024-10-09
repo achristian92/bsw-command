@@ -1,96 +1,54 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
-use Warrior\Ticketer\Ticketer;
 
-class CheckCommandTicketer extends Command
+class TestController extends Controller
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'command:checkCommandTicketer';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'consult api to command ticketer';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function index()
     {
-        parent::__construct();
-    }
+        $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
+        $token = env('COMPANY_TOKEN');
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle()
-    {
-        $this->info('Iniciando escuchador para consultar la API cada 20 segundos...');
-        Log::info("Consultando api ticketer");
-        while (true) {
+        Log::info("api base:".$api_url);
+        Log::info("token:".$token);
 
-            $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
-            $token = env('COMPANY_TOKEN');
+        $response = Http::withHeaders([
+            'accept' => 'application/json'
+        ])->get($api_url.'api/v1/command',[
+            'token' => $token
+        ]);
 
-            Log::info("api base:".$api_url);
-            Log::info("token:".$token);
-
-            $response = Http::withHeaders([
-                'accept' => 'application/json'
-            ])->get($api_url.'api/v1/command',[
-                'token' => $token
-            ]);
-
-            if (!$response->successful()) {
-                Log::error($response->json()['errors'][0]['detail'][0]);
-                return 0;
-            }
-
-
-            $respApi = $response->json()['data'];
-
-            foreach ($respApi as $rep) {
-                if($rep['success'] == '0')
-                    continue;
-
-                if($rep['model_type'] === 'command')
-                    $this->command($rep);
-                if($rep['model_type'] === 'precuenta')
-                    $this->preCuenta($rep);
-                if($rep['model_type'] === 'invoice')
-                    $this->invoice($rep);
-                if($rep['model_type'] === 'cashRegister')
-                    $this->cashRegister($rep);
-            }
-
-            // Espera 20 segundos antes de la siguiente iteración
-            sleep(20);
+        if (!$response->successful()) {
+            Log::error($response->json()['errors'][0]['detail'][0]);
+            return 0;
         }
 
-        return 0;
-    }
+        $respApi = $response->json()['data'];
+        dd($respApi);
+        foreach ($respApi as $rep) {
+            if($rep['success'] == '0')
+                continue;
 
+            if($rep['model_type'] === 'command')
+                $this->command($rep);
+            if($rep['model_type'] === 'precuenta')
+                $this->preCuenta($rep);
+            if($rep['model_type'] === 'invoice')
+                $this->invoice($rep);
+            if($rep['model_type'] === 'cashRegister')
+                $this->cashRegister($rep);
+        }
+
+        // Espera 20 segundos antes de la siguiente iteración
+    }
     private function command($rep)
     {
         $data = json_decode($rep['data']);
