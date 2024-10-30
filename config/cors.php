@@ -21,7 +21,7 @@ return [
 
     'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => ['http://localhost:3000/','http://brainsware.test','https://brainsware.pe'],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 

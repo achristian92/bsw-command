@@ -26,5 +26,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/token', function () {
+    $centro = 'mz2eouwiZqShRGjSbxIYtl0zurpCmxet4PKZ8SCa3fSgYWXU';
+    $tavera = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
+});
+
 Route::get('api/command', ApiCommandController::class)->withoutMiddleware('auth:web');
 

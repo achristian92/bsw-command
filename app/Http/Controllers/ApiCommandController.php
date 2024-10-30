@@ -2,33 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 
 class ApiCommandController extends Controller
 {
-    public function __invoke()
+    public function __invoke(Request $request)
     {
+        $isSuccessful = true;
+        $api_url =  'http://brainsware.test/';
+        $token = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
+
         Log::info("Comandar: ".now()->format('d/m/Y H:i:s'));
-        $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
-        $token = env('COMPANY_TOKEN');
+        Log::info("token: ".$token);
+        Log::info("env: ".$api_url);
 
         $response = Http::withHeaders([
             'accept' => 'application/json'
         ])->get($api_url.'api/v1/command',[
-            'token' => $token
+            'token' => $token,
+            'uuid' => $request->input('uuid')
         ]);
 
         if (!$response->successful()) {
+            $isSuccessful = false;
             Log::error($response->json()['errors'][0]['detail'][0]);
             return 0;
         }
 
         $respApi = $response->json()['data'];
+
 
         foreach ($respApi as $rep) {
             if($rep['success'] == '0')
@@ -43,6 +52,8 @@ class ApiCommandController extends Controller
             if($rep['model_type'] === 'cashRegister')
                 $this->cashRegister($rep);
         }
+
+        return $isSuccessful ? 'ok' : 'bad';
     }
 
     private function command($rep)
