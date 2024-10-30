@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiCommandController;
 use App\Http\Controllers\TestController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
@@ -25,4 +26,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test', [TestController::class,'index']);
+Route::get('api/command', ApiCommandController::class)->withoutMiddleware('auth:web');
+

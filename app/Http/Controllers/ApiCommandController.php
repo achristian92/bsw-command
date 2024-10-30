@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,15 +9,13 @@ use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 
-class TestController extends Controller
+class ApiCommandController extends Controller
 {
-    public function index()
+    public function __invoke()
     {
-        $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
+        Log::info("Comandar: ".now()->format('d/m/Y H:i:s'));
+        $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
         $token = env('COMPANY_TOKEN');
-
-        Log::info("api base:".$api_url);
-        Log::info("token:".$token);
 
         $response = Http::withHeaders([
             'accept' => 'application/json'
@@ -46,15 +43,14 @@ class TestController extends Controller
             if($rep['model_type'] === 'cashRegister')
                 $this->cashRegister($rep);
         }
-
-        // Espera 20 segundos antes de la siguiente iteración
     }
+
     private function command($rep)
     {
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -98,7 +94,7 @@ class TestController extends Controller
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -155,7 +151,7 @@ class TestController extends Controller
 
         for ($i = 1; $i <= 2; $i++) {
             try {
-                $connector = new NetworkPrintConnector($data->printer->pr_ip);
+                $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
                 $printer = new Printer($connector);
                 $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
                 $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -231,7 +227,7 @@ class TestController extends Controller
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -297,5 +293,4 @@ class TestController extends Controller
             'message' => $msg
         ]);
     }
-
 }
