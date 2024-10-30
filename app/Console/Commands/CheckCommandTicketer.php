@@ -96,7 +96,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -140,7 +140,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -197,7 +197,7 @@ class CheckCommandTicketer extends Command
 
         for ($i = 1; $i <= 2; $i++) {
             try {
-                $connector = new NetworkPrintConnector($data->printer->pr_ip);
+                $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
                 $printer = new Printer($connector);
                 $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
                 $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -273,7 +273,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip);
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
