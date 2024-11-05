@@ -21,9 +21,6 @@ class ApiCommandController extends Controller
         $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
         $token = env('COMPANY_TOKEN');
 
-        $api_url =  'http://brainsware.test/';
-        $token = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
-
         Log::info("Comandar: ".now()->format('d/m/Y H:i:s'));
         Log::info("token: ".$token);
         Log::info("env: ".$api_url);
@@ -318,10 +315,15 @@ class ApiCommandController extends Controller
 
     private function getConnector($data)
     {
-        if($data->printer->win_usb)
+        if($data->printer->win_usb) {
             $connector = new WindowsPrintConnector($data->printer->win_usb);
-        elseif ($data->printer->pr_ip)
+            Log::info("PRINTER BY WIN USB");
+        }
+        elseif ($data->printer->pr_ip) {
+            Log::info("PRINTER BY IP");
             $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+        }
+
 
         return $connector;
     }
