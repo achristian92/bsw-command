@@ -9,13 +9,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 
 class ApiCommandController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $isSuccessful = true;
+        $isSuccessful = false;
+
+        $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
+        $token = env('COMPANY_TOKEN');
+
         $api_url =  'http://brainsware.test/';
         $token = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
 
@@ -31,37 +36,34 @@ class ApiCommandController extends Controller
         ]);
 
         if (!$response->successful()) {
-            $isSuccessful = false;
             Log::error($response->json()['errors'][0]['detail'][0]);
-            return 0;
+            return 'bad';
         }
 
         $respApi = $response->json()['data'];
 
-
         foreach ($respApi as $rep) {
-            if($rep['success'] == '0')
-                continue;
-
             if($rep['model_type'] === 'command')
-                $this->command($rep);
+                $isSuccessful = $this->command($rep);
             if($rep['model_type'] === 'precuenta')
-                $this->preCuenta($rep);
+                $isSuccessful = $this->preCuenta($rep);
             if($rep['model_type'] === 'invoice')
-                $this->invoice($rep);
+                $isSuccessful = $this->invoice($rep);
             if($rep['model_type'] === 'cashRegister')
-                $this->cashRegister($rep);
+                $isSuccessful = $this->cashRegister($rep);
         }
 
         return $isSuccessful ? 'ok' : 'bad';
     }
 
-    private function command($rep)
+    private function command($rep):bool
     {
+
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
+
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -92,12 +94,17 @@ class ApiCommandController extends Controller
 
             $notify = $this->sendStatusCommand($rep['uuid'],1,"Exitoso");
 
-            if (!$notify->successful())
+           $isSuccess = true;
+            if (!$notify->successful()) {
+                $isSuccess = false;
                 Log::error("Error para actualizar envio de comanda");
+            }
 
+            return $isSuccess;
         } catch (Exception $e) {
             $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
             Log::error($e->getMessage());
+            return false;
         }
     }
     private function preCuenta($rep)
@@ -105,7 +112,8 @@ class ApiCommandController extends Controller
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
+
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -146,13 +154,18 @@ class ApiCommandController extends Controller
             $printer ->close();
 
             $notify = $this->sendStatusCommand($rep['uuid'],1,"Existoso");
-
-            if (!$notify->successful())
+            $isSuccess = true;
+            if (!$notify->successful()) {
+                $isSuccess = false;
                 Log::error("Error para actualizar envio de comanda");
+            }
+
+            return $isSuccess;
 
         } catch (Exception $e) {
             $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
             Log::error($e->getMessage());
+            return false;
         }
 
     }
@@ -162,7 +175,7 @@ class ApiCommandController extends Controller
 
         for ($i = 1; $i <= 2; $i++) {
             try {
-                $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+                $connector = $this->getConnector($data);
                 $printer = new Printer($connector);
                 $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
                 $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -220,15 +233,20 @@ class ApiCommandController extends Controller
 
                 if($i == '1') {
                     $notify = $this->sendStatusCommand($rep['uuid'],1,"Existoso");
-
-                    if (!$notify->successful())
+                    $isSuccess = true;
+                    if (!$notify->successful()) {
                         Log::error("Error para actualizar envio de comanda");
+                        $isSuccess = false;
+                    }
+
+                    return $isSuccess;
                 }
 
 
             } catch (Exception $e) {
                 $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
                 Log::error($e->getMessage());
+                return false;
             }
         }
 
@@ -238,7 +256,7 @@ class ApiCommandController extends Controller
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -282,14 +300,30 @@ class ApiCommandController extends Controller
 
             $notify = $this->sendStatusCommand($rep['uuid'],1,'Exitoso');
 
-            if (!$notify->successful())
+            $isSuccess = true;
+            if (!$notify->successful()) {
+                $isSuccess = false;
                 Log::error("Error para actualizar envio de comanda");
+            }
+
+            return $isSuccess;
 
         } catch (Exception $e) {
             $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
             Log::error($e->getMessage());
+            return false;
         }
 
+    }
+
+    private function getConnector($data)
+    {
+        if($data->printer->win_usb)
+            $connector = new WindowsPrintConnector($data->printer->win_usb);
+        elseif ($data->printer->pr_ip)
+            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+
+        return $connector;
     }
     private function sendStatusCommand($uuid, $code, $msg)
     {

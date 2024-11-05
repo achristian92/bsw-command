@@ -28,15 +28,14 @@ Route::get('/', function () {
 
 Route::get('/token', function () {
     $centro = 'mz2eouwiZqShRGjSbxIYtl0zurpCmxet4PKZ8SCa3fSgYWXU';
-    $centro2 = 'mz2eouwiZqShRGjSbxIYtl0zurpCmxet4PKZ8SCa3fSgYWXU';
+    $tavera = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
 
 
 //    APP_URL=https://bsw-command.test
-//COMPANY_TOKEN=w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a
-//API_URL_PROD=https://brainsware.pe/
-//API_URL_DEV=http://brainsware.test/
+//    COMPANY_TOKEN=w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a
+//    API_URL_PROD=https://brainsware.pe/
+//    API_URL_DEV=https://brainsware.test/
 
-    $tavera = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
 });
 
 Route::get('api/command', ApiCommandController::class)->withoutMiddleware('auth:web');
