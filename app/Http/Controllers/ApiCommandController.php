@@ -69,6 +69,9 @@ class ApiCommandController extends Controller
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text($data->company."\n");
             $printer -> text("#:".$data->num."\n");
+            if (isset($rep['count']))
+                if($rep['count'] >= 1)
+                    $printer -> text("COPIA NRO:".$rep['count']."\n");
             $printer -> setJustification(Printer::JUSTIFY_LEFT);
             $printer -> text("AREA:".$data->printer->area."\n");
             $printer -> text("HORA:".$data->date.' '.$data->time."\n");
@@ -170,9 +173,8 @@ class ApiCommandController extends Controller
     private function invoice($rep)
     {
         $data = json_decode($rep['data']);
-
-        for ($i = 1; $i <= 2; $i++) {
-            try {
+        try {
+            for($i = 1; $i <= 2; $i++) {
                 $connector = $this->getConnector($data);
                 $printer = new Printer($connector);
                 $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
@@ -235,16 +237,16 @@ class ApiCommandController extends Controller
                     if (!$notify->successful()) {
                         Log::error("Error para actualizar envio de comanda");
                         $isSuccess = false;
-                    }  
+                    }
                 }
-
-                return $isSuccess;
-            } catch (Exception $e) {
-                $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
-                Log::error($e->getMessage());
-                return false;
             }
+            return $isSuccess;
+        } catch (Exception $e) {
+            $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
+            Log::error($e->getMessage());
+            return false;
         }
+
 
     }
     private function cashRegister($rep)
@@ -328,7 +330,7 @@ class ApiCommandController extends Controller
     }
     private function sendStatusCommand($uuid, $code, $msg)
     {
-        $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
+        $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
         $token = env('COMPANY_TOKEN');
 
         return Http::withHeaders([

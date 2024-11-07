@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 use Warrior\Ticketer\Ticketer;
 
@@ -104,6 +105,9 @@ class CheckCommandTicketer extends Command
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text($data->company."\n");
             $printer -> text("#:".$data->num."\n");
+            if (isset($rep['count']))
+                if($rep['count'] >= 1)
+                    $printer -> text("COPIA NRO:".$rep['count']."\n");
             $printer -> setJustification(Printer::JUSTIFY_LEFT);
             $printer -> text("AREA:".$data->printer->area."\n");
             $printer -> text("HORA:".$data->date.' '.$data->time."\n");
@@ -344,7 +348,7 @@ class CheckCommandTicketer extends Command
 
     private function sendStatusCommand($uuid, $code, $msg)
     {
-        $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
+        $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
         $token = env('COMPANY_TOKEN');
 
         return Http::withHeaders([
