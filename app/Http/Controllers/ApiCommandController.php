@@ -16,6 +16,7 @@ class ApiCommandController extends Controller
 {
     public function __invoke(Request $request)
     {
+        Log::info("entroo");
         $isSuccessful = false;
 
         $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
@@ -234,12 +235,10 @@ class ApiCommandController extends Controller
                     if (!$notify->successful()) {
                         Log::error("Error para actualizar envio de comanda");
                         $isSuccess = false;
-                    }
-
-                    return $isSuccess;
+                    }  
                 }
 
-
+                return $isSuccess;
             } catch (Exception $e) {
                 $this->sendStatusCommand($rep['uuid'],0,$e->getMessage());
                 Log::error($e->getMessage());

@@ -71,8 +71,8 @@ class CheckCommandTicketer extends Command
             $respApi = $response->json()['data'];
 
             foreach ($respApi as $rep) {
-                if($rep['success'] == '0')
-                    continue;
+                //if($rep['success'] == '0')
+                //    continue;
 
                 if($rep['model_type'] === 'command')
                     $this->command($rep);
@@ -96,7 +96,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -140,7 +140,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -197,7 +197,7 @@ class CheckCommandTicketer extends Command
 
         for ($i = 1; $i <= 2; $i++) {
             try {
-                $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+                $connector = $this->getConnector($data);
                 $printer = new Printer($connector);
                 $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
                 $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -273,7 +273,7 @@ class CheckCommandTicketer extends Command
         $data = json_decode($rep['data']);
 
         try {
-            $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            $connector = $this->getConnector($data);
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -326,6 +326,22 @@ class CheckCommandTicketer extends Command
         }
 
     }
+
+     private function getConnector($data)
+        {
+            if($data->printer->win_usb) {
+                $connector = new WindowsPrintConnector($data->printer->win_usb);
+                Log::info("PRINTER BY WIN USB");
+            }
+            elseif ($data->printer->pr_ip) {
+                Log::info("PRINTER BY IP");
+                $connector = new NetworkPrintConnector($data->printer->pr_ip,'9100',true);
+            }
+
+
+            return $connector;
+     }
+
     private function sendStatusCommand($uuid, $code, $msg)
     {
         $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
