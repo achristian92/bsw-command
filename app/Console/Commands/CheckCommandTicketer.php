@@ -64,8 +64,10 @@ class CheckCommandTicketer extends Command
             $respApi = $response->json()['data'];
 
             foreach ($respApi as $rep) {
-                Log::info("*****Job UUID: " .$rep['uuid']);
+                if($rep['is_from_cashier'])
+                    continue;
 
+                Log::info("*****Job UUID: " .$rep['uuid']);
                 if($rep['model_type'] === 'command')
                     $this->command($rep);
                 if($rep['model_type'] === 'precuenta')
