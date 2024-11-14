@@ -79,7 +79,7 @@ class CheckCommandTicketer extends Command
             }
 
             // Espera 20 segundos antes de la siguiente iteración
-            sleep(20);
+            sleep(30);
         }
 
         return 0;
