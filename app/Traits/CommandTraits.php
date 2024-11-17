@@ -15,12 +15,12 @@ trait CommandTraits
 {
     public function command($rep):bool
     {
-
+        Log::info("entro para comandar");
         $data = json_decode($rep['data']);
 
         try {
             $connector = $this->getConnector($data);
-
+            Log::info("entro en conector");
             $printer = new Printer($connector);
             $printer -> selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
@@ -295,6 +295,9 @@ trait CommandTraits
     {
         $api_url = App::isProduction() ?  env('API_URL_PROD') :  env('API_URL_DEV');
         $token = env('COMPANY_TOKEN');
+
+        Log::info("api url: ".$api_url);
+        Log::info("token: ".$token);
 
         return Http::withHeaders([
             'accept' => 'application/json'

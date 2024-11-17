@@ -3,12 +3,14 @@
 use App\Http\Controllers\ApiCommandController;
 use App\Http\Controllers\TestController;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
+use Spatie\WebhookClient\WebhookProcessor;
 use Warrior\Ticketer\Ticketer;
 
 /*
@@ -39,4 +41,6 @@ Route::get('/token', function () {
 });
 
 Route::get('api/command', ApiCommandController::class)->withoutMiddleware('auth:web');
+
+Route::webhooks('webhook-receiving-url');
 

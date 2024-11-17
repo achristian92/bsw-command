@@ -47,6 +47,7 @@ class CheckCommandTicketer extends Command
 
             $api_url = App::environment('production') ?  env('API_URL_PROD') :  env('API_URL_DEV');
             $token = env('COMPANY_TOKEN');
+            $anexo_id = env('ANEXO_ID');
 
             $response = Http::withHeaders([
                 'accept' => 'application/json'
@@ -65,6 +66,9 @@ class CheckCommandTicketer extends Command
 
             foreach ($respApi as $rep) {
                 if($rep['is_from_cashier'])
+                    continue;
+
+                if((int)$rep['anexo_id'] !== (int)$anexo_id)
                     continue;
 
                 Log::info("*****Job UUID: " .$rep['uuid']);
