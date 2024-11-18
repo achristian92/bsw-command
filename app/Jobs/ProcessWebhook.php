@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\ProcessedWebhook;
 use App\Traits\CommandTraits;
 use Illuminate\Support\Facades\Log;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob;
@@ -14,6 +15,17 @@ class ProcessWebhook extends ProcessWebhookJob
     {
         $rep = json_decode($this->webhookCall,true)['payload']['command'];
 
+        $webhookId = $rep['id'];
+
+        if($rep['resend'])
+            ProcessedWebhook::where('webhook_id', $webhookId)->delete();
+
+        if (ProcessedWebhook::where('webhook_id', $webhookId)->exists())
+            return response('Webhook already processed', 200);
+
+
+        ProcessedWebhook::create(['webhook_id' => $rep['id']]);
+
         if($rep['model_type'] === 'command')
             $this->command($rep);
         elseif($rep['model_type'] === 'precuenta')
@@ -25,6 +37,6 @@ class ProcessWebhook extends ProcessWebhookJob
 
         Log::info('Webhook recibido: '.$rep['id']);
 
-        http_response_code(200);
+        return http_response_code(200);
     }
 }
