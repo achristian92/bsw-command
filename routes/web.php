@@ -32,6 +32,15 @@ Route::get('/token', function () {
     $centro = 'mz2eouwiZqShRGjSbxIYtl0zurpCmxet4PKZ8SCa3fSgYWXU';
     $tavera = 'w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a';
 
+//@echo off
+// expose share --subdomain=bsw-command --server=eu-1 http://bsw-command.test
+    //.bat
+
+//shell:startup
+
+//Set WshShell = CreateObject("WScript.Shell")
+//WshShell.Run """C:\Users\Luz\Herd\start_expose.bat""", 0, False
+// .vbs
 
 //    APP_URL=https://bsw-command.test
 //    COMPANY_TOKEN=w2cVUAI35H6dbBduOcldRAWzKQZEblgp0CeeEKT1vf2mbI6a
