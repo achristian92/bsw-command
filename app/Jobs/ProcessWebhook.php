@@ -24,7 +24,9 @@ class ProcessWebhook extends ProcessWebhookJob
             return response('Webhook already processed', 200);
 
 
-        ProcessedWebhook::create(['webhook_id' => $rep['id']]);
+        ProcessedWebhook::create(['webhook_id' => $webhookId]);
+
+        Log::info("MODEL TYPE: ".$rep['model_type']);
 
         if($rep['model_type'] === 'command')
             $this->command($rep);

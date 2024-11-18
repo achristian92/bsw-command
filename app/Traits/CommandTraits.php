@@ -71,6 +71,8 @@ trait CommandTraits
 
     public function preCuenta($rep):bool
     {
+        Log::info("Entro en preCuenta");
+        
         $data = json_decode($rep['data']);
 
         try {
