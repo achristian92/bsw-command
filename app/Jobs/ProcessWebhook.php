@@ -17,8 +17,8 @@ class ProcessWebhook extends ProcessWebhookJob
 
         $webhookId = $rep['id'];
 
-        if($rep['resend'])
-            ProcessedWebhook::where('webhook_id', $webhookId)->delete();
+//        if($rep['resend'])
+//            ProcessedWebhook::where('webhook_id', $webhookId)->delete();
 
         if (ProcessedWebhook::where('webhook_id', $webhookId)->exists())
             return response('Webhook already processed', 200);
