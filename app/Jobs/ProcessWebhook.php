@@ -15,18 +15,16 @@ class ProcessWebhook extends ProcessWebhookJob
         $rep = json_decode($this->webhookCall,true)['payload']['command'];
 
         if($rep['model_type'] === 'command')
-            $isSuccessful = $this->command($rep);
-        if($rep['model_type'] === 'precuenta')
-            $isSuccessful = $this->preCuenta($rep);
-        if($rep['model_type'] === 'invoice')
-            $isSuccessful = $this->invoice($rep);
-        if($rep['model_type'] === 'cashRegister')
-            $isSuccessful = $this->cashRegister($rep);
+            $this->command($rep);
+        elseif($rep['model_type'] === 'precuenta')
+            $this->preCuenta($rep);
+        elseif($rep['model_type'] === 'invoice')
+            $this->invoice($rep);
+        elseif($rep['model_type'] === 'cashRegister')
+            $this->cashRegister($rep);
 
         Log::info('Webhook recibido: '.$rep['id']);
-//
-//        return $isSuccessful ? 'ok' : 'bad';
-        // Lógica de procesamiento, por ejemplo:
 
+        http_response_code(200);
     }
 }

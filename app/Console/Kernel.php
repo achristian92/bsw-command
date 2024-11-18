@@ -15,7 +15,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('command:checkCommandTicketer')->withoutOverlapping(1)->everyMinute();
+        //$schedule->command('command:checkCommandTicketer')->withoutOverlapping(1)->everyMinute();
         // $schedule->command('inspire')->hourly();
     }
 
